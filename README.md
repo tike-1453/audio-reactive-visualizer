@@ -9,11 +9,7 @@ music playing in the room drives its size in real time.
 > Click **"start the mic"** and allow microphone access, then play some music.
 > (Microphone access requires HTTPS — the live link above is served over HTTPS.)
 
-<!-- Drop your recorded clip here for instant portfolio impact:
-     1. Record a 15s GIF/MP4 of the sphere reacting to music
-     2. Save it in this repo (e.g. /preview.gif)
-     3. Uncomment the line below -->
-<!-- ![demo](preview.gif) -->
+![Audio-reactive visualizer reacting to music](preview.gif)
 
 ---
 
