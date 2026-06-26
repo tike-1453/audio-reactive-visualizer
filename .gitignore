@@ -1,0 +1,14 @@
+# dependencies (re-installed from package.json, never committed)
+node_modules/
+
+# build output
+dist/
+
+# local env / editor / OS files
+.env
+.env.local
+.DS_Store
+*.log
+
+# vite cache
+.vite/
