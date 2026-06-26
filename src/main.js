@@ -95,10 +95,6 @@ const clock = new THREE.Clock();
 let analyser = null; // the "meter" that reads the mic's loudness
 let audioData = null; // a reusable array we copy each frame's readings into
 
-// DEMO MODE: add "?demo" to the URL to skip the mic and auto-play a fake but
-// lively music signal. Great for recording a clip with no mic/music needed.
-const demoMode = new URLSearchParams(window.location.search).has("demo");
-
 async function startMic() {
   // 1. Ask the browser for the microphone. This is what pops the
   //    permission prompt; it waits (await) until the user clicks Allow.
@@ -122,11 +118,6 @@ async function startMic() {
 
 document.getElementById("start-btn").addEventListener("click", startMic);
 
-// In demo mode there's no mic to start, so hide the button right away.
-if (demoMode) {
-  document.getElementById("start-btn").style.display = "none";
-}
-
 // Reads the mic and returns a single loudness value from 0 (silent) to 1 (loud).
 function getVolume() {
   // Fill audioData with the current loudness of each frequency band (0-255).
@@ -142,21 +133,6 @@ function getVolume() {
   return average / 255; // squish into 0-1 so it's easy to work with
 }
 
-// Fakes a loud-and-quiet music signal (0-1) so the demo performs on its own.
-// Built from a punchy kick-drum beat + a faster hi-hat + a slow swell.
-function simulatedVolume(t) {
-  const beat = 0.5; // one kick every 0.5s = 120 BPM
-  const kickPhase = (t % beat) / beat; // 0->1 across each beat
-  const kick = Math.pow(1 - kickPhase, 3); // sharp punch, quick fade
-
-  const hatPhase = (t % (beat / 2)) / (beat / 2); // twice as fast
-  const hat = Math.pow(1 - hatPhase, 6) * 0.3; // soft ticks between kicks
-
-  const swell = (Math.sin(t * 0.7) * 0.5 + 0.5) * 0.25; // slow rise/fall
-
-  return Math.min(1, kick * 0.8 + hat + swell); // cap at 1
-}
-
 // 5. The animation loop: instead of drawing once, we draw ~60 times a second.
 //    requestAnimationFrame asks the browser to call animate() again on the
 //    next frame, so this function keeps re-scheduling itself forever.
@@ -168,22 +144,17 @@ function animate() {
   sphere.rotation.y += 0.01;
   sphere.rotation.x += 0.005;
 
-  // Decide the sphere's size. Grab a 0-1 loudness from whichever source is live.
-  let volume = null;
-  if (analyser) {
-    volume = getVolume(); // REAL AUDIO from the mic
-  } else if (demoMode) {
-    volume = simulatedVolume(clock.getElapsedTime()); // FAKE music for ?demo
-  }
-
+  // Decide the sphere's size. Two modes:
   let scale;
-  if (volume !== null) {
-    // Reactive: size + glow both driven by loudness.
-    //   1 + volume * 1.5 -> grow up to +150% on a loud hit
+  if (analyser) {
+    // REAL AUDIO: drive the size straight from how loud the mic is.
+    //   1 +          -> normal size when silent
+    //   volume * 1.5 -> grow up to +150% at full volume (the punch)
+    const volume = getVolume();
     scale = 1 + volume * 1.5;
-    bloomPass.strength = 0.9 + volume * 1.2; // flash the glow brighter on beats
   } else {
-    // FAKE BEAT (Box 3): gentle idle pulse until the mic is granted.
+    // FAKE BEAT (Box 3): runs until the mic is granted, just so the
+    // sphere isn't dead on arrival. Same sine pulse as before.
     const elapsed = clock.getElapsedTime();
     scale = 1 + Math.sin(elapsed * 2) * 0.15;
   }
